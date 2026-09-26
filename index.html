@@ -83,6 +83,55 @@ nav.tabs button.on{color:var(--red); border-bottom-color:var(--red); font-weight
 .explain .verdict.good{color:var(--good);} .explain .verdict.bad{color:var(--bad);}
 .explain .tip{margin-top:10px; display:inline-block; background:var(--green); color:#f7f3e8;
   font-size:13px; border-radius:5px; padding:2px 10px;}
+/* v3: 高级题状态条 */
+.statusbar{margin:8px 0; font-size:13.5px; background:#f8f4e9; border:1px solid var(--line); border-radius:8px; padding:8px 10px;}
+.srow{display:flex; align-items:center; gap:6px; margin:3px 0; flex-wrap:wrap;}
+.srow1{gap:8px;}
+.stars{color:var(--gold); letter-spacing:2px; font-size:14px;}
+.qtag{font-size:12px; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:0 6px;}
+.ctag{font-size:12px; border-radius:4px; padding:1px 8px; color:#f7f3e8;}
+.ctag.rule{background:var(--good);}
+.ctag.preferred{background:var(--green);}
+.ctag.risky{background:#c26a1b;}
+.ctag.insufficient{background:var(--gold);}
+.slabel{color:var(--red); font-weight:700; min-width:36px;}
+.seat{border:1px solid var(--line); background:#fff; border-radius:5px; padding:0 8px; font-size:13px;}
+.seat.me{background:var(--green); color:#f7f3e8; border-color:var(--green); font-weight:700;}
+.sarr{color:var(--ink-soft);}
+.histmore{display:inline;}
+.histmore summary{display:inline; cursor:pointer; color:var(--green); font-size:13px;}
+/* v3: 顺子区间表 */
+.intervals{margin:8px 0; display:flex; flex-direction:column; gap:5px;}
+.iv{display:flex; align-items:center; gap:8px; font-size:13.5px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px;}
+.iv b{font-family:Georgia,serif; letter-spacing:1px; min-width:70px;}
+.iv span{font-size:12px; border-radius:4px; padding:0 8px; color:#f7f3e8;}
+.iv i{color:var(--ink-soft); font-style:normal; font-size:12.5px;}
+.iv-ok span{background:var(--good);}
+.iv-warn span{background:var(--gold);}
+.iv-out{opacity:.75;} .iv-out span{background:#9a917f;}
+/* v3: 八块解析 */
+.concl{border-radius:8px; padding:10px 12px; margin-bottom:8px; border-left:5px solid;}
+.concl b{font-size:16px;}
+.concl-sub{font-size:13.5px; margin-top:4px; color:var(--ink);}
+.concl.preferred{background:#e9f4ec; border-color:var(--good);}
+.concl.rule{background:#e9f4ec; border-color:var(--good);}
+.concl.risky{background:#fdf0e2; border-color:#c26a1b;}
+.concl.insufficient{background:#fdf6e3; border-color:var(--gold);}
+.ablock{margin-top:8px; padding:8px 10px; background:#fff; border:1px solid var(--line); border-radius:0 8px 8px 0; border-left:4px solid var(--green);}
+.ablock b{color:var(--green); display:block; margin-bottom:2px; font-size:14px;}
+.ablock.worst{border-left-color:var(--bad);} .ablock.worst b{color:var(--bad);}
+.ablock.rev{border-left-color:var(--gold);} .ablock.rev b{color:#8a6d2f;}
+.oppview{margin-top:8px; background:#f1ede2; border-radius:8px; padding:10px 12px;}
+.oppview b{display:block; color:var(--ink); font-size:14px; margin-bottom:2px;}
+.explain .verdict.warn{color:#c26a1b;}
+.deep{margin-top:8px; font-size:13.5px;} .deep summary{cursor:pointer; color:var(--green);}
+/* v3: followUp 二阶段 */
+.fuwrap{margin-top:12px; border-top:1px dashed var(--line); padding-top:10px;}
+.fubtn{background:var(--green); color:#f7f3e8; border:none; border-radius:8px; padding:8px 18px; font-size:14px; cursor:pointer; font-family:inherit;}
+.fureveal{background:#fdf6e3; border-left:4px solid var(--gold); border-radius:0 8px 8px 0; padding:8px 12px; margin-bottom:8px; font-size:14.5px;}
+.fuq{font-weight:700; font-size:15.5px; margin:6px 0;}
+.fuwhy{margin-top:8px; font-size:14.5px;}
+
 .rule-sec{background:var(--card-bg); border:1px solid var(--line); border-radius:10px;
   padding:16px; margin-bottom:14px;}
 .rule-sec h3{margin:0 0 8px; font-size:17px; color:var(--red);}
@@ -129,7 +178,7 @@ nav.tabs button.on{color:var(--red); border-bottom-color:var(--red); font-weight
   <div id="scnList"></div>
 </section>
 <section class="panel" id="p-adv">
-  <div class="legend">进阶题每道都带<b>座次、剩牌、已出关键牌、已知牌路</b>——先看条件再选。解析分四层：结论 / 为什么 / 其他选项为什么不优 / <b>什么时候答案会反转</b>。记住：条件一变，答案可能就变。</div>
+  <div class="legend">进阶题每道都带<b>座次、剩牌、记牌、牌路</b>——先看条件再选。结论分<b>当前更优 / 规则确定 / 高风险 / 信息不足</b>，不是非黑即白。解析含：你的目标、对手最优回应、队友影响、你的下一手、最坏情况、<b>答案反转条件</b>、对手视角。记住：条件一变，答案可能就变。</div>
   <div class="progress">
     <span id="advProgText"></span>
     <div class="bar"><i id="advProgBar"></i></div>
@@ -278,17 +327,35 @@ var SCENARIOS = [
  answer:1,
  why:"<b>规则上</b>：领出时两手都合法。注意掼蛋里没有「三带一」这种牌型，能带牌走的是三带二（要 5 张）。<b>建议上</b>：对手剩 4 张，最危险的是<b>四张炸弹</b>——他很可能等你出牌就炸，你先炸正中下怀（你的炸弹比他小就是白给）。所以别主动交炸弹。打单张而不打对子：4 张还可能是<b>两对</b>，你出对子正好喂他两手走完；打单张不喂对子，是更稳的试探。但这只是常见打法——记牌确定他没炸时，炸了拿牌权也没错。",
  tip:"剩4张慎炸加打单"},
-{id:12, cat:"残局", title:"对手剩6张：打三张施压",
- bg:"对手A报牌剩 6 张。轮到你出牌，你手里有三带二。",
+{id:12, cat:"残局", title:"对手剩6张：当前更优777带44",
+ certainty:"preferred", difficulty:3, qtype:"残局",
+ levelRank:"2",
+ seats:["enemyA","you","partner","enemyB"], leader:"you",
+ remaining:{you:8, partner:10, enemyA:6, enemyB:12},
+ bg:"对手A报剩6张。轮到你领出，你手里有三带二。",
  table:"对手A报剩6张。",
- hand:["♠7","♥7","♦7","♥4","♣4","♣5","♦5","♦3"],
+ tableText:"你领牌。",
+ hand:["♦3","♥4","♣4","♣5","♦5","♠7","♥7","♦7"],
  options:[
   {label:"出三带二 777带44", play:["♠7","♥7","♦7","♥4","♣4"]},
   {label:"出对55", play:["♣5","♦5"]},
   {label:"出单张 ♦3", play:["♦3"]}],
- answer:0,
- why:"口诀「对手剩六张，可以打三张」：6 张最常见的结构是三带二或「对子加散牌」，你主动出三带二施压，既探他虚实，又不给他舒服出牌的机会。对子 55 可以留着，等他剩 5 张时再打效果更好。",
- tip:"剩6张打三张"},
+ answer:0, recText:"777带44",
+ objective:"一次走5张，同时尽量让对手难以用普通牌型接走牌权。",
+ opponentResponse:"单3可以被几乎任何更大的单张接；对55可以被任何更大对子接；777带44通常需要更大的三带二或炸弹。因此三带二让对手的「普通应手集合」最窄。",
+ partnerImpact:"如果队友就在对手之后且拥有强三带二/炸弹，你的77744风险会下降；如果队友对子强而三张系弱，出55可能更容易把牌权送到队友手里。",
+ nextStep:"如果77744无人接，你剩3+55；下一步通常先评估55能否安全走，而不是机械出3。",
+ worstCase:"如果对手6张恰好是88866+A，你的77744正好给了他最舒服的回应：88866一次走5张，只剩A。这叫「喂中结构」。",
+ reverseCondition:"如果历史显示对手连续出过三带二、三张系明显很强，那么55甚至单3都可能优于77744。",
+ opponentView:"如果我是对手，手里正好是更大三带二+单，我最希望你出77744；如果我是对手且是对子结构，我更希望你出55。",
+ explanationShort:"没有更多牌路信息时，更倾向出777带44，但不是因为「6张就一定打三」。",
+ followUps:[
+  {reveal:"对手A前两轮连续出了三带二。",
+   question:"现在你还坚持出777带44吗？",
+   options:["坚持出777带44","改出55","改出单3"],
+   answer:1,
+   why:"三张系强的概率上升，原答案风险增大——这正是「答案反转条件」活过来的时刻。"}],
+ tip:"当前更优，不是铁律"},
 {id:13, cat:"残局", title:"对手剩7张：顺子反制",
  bg:"对手B报牌剩 7 张。轮到你出牌，你手里有个顺子 4-8。",
  table:"对手B报剩7张。",
@@ -376,60 +443,82 @@ var SCENARIOS = [
  why:"规则要求「剩6张主动报牌，剩10张有问必报」。报牌是所有残局判断的基础——不报牌，对手的剩余牌型就无从推算，你的「剩5张考虑炸」「剩4张慎炸」都无从谈起。提醒他是维护规则，不是找茬。",
  tip:"6张主动报牌"}
 ,
-{id:21, cat:"中盘", title:"炸弹候选：还剩哪些炸可能？",
- bg:"中盘。你在算炸弹余量——高手不数「出了几个炸」，而是算「还剩哪几种炸可能」。场上已出 1 个炸（四张5）。",
- table:"轮到你领出。对手A剩9张、B剩10张。",
- hand:["♠3","♥4","♣5","♦6","♠7","♥9","♦9"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 7 · 敌A 9 · 敌B 10 · 队友 8",
- keys:"9:7/8 · A:6/8 · 2(级):5/8 · 红桃2:2/2已出 · 大王1/2 · 小王2/2已出 · K:3/8 · Q:2/8 · J:1/8 · 已出炸弹:1个(四张5)",
- hist:"敌A 出过三带二；敌B 拆过对子",
+{id:21, cat:"中盘", title:"候选炸弹：哪类炸仍有组合空间？",
+ certainty:"preferred", difficulty:4, qtype:"读牌",
+ levelRank:"2",
+ seats:["you","enemyA","partner","enemyB"], leader:"you",
+ remaining:{you:7, partner:8, enemyA:9, enemyB:10},
+ bg:"中盘。别数「出了几个炸」——维护「候选集合」：每种点数还剩几张、还够不够4张、王炸还组不组成。",
+ table:"轮到你出牌。",
+ tableText:"轮到你出牌。",
+ keyCounts:{nineSeen:7, aceSeen:6, levelSeen:5, wildSeen:2, bigJokerSeen:2},
+ hist:"本局已出过两个小炸：四张5、四张7",
+ hand:["♠3","♣6","♥6","♠7","♥7","♦Q","♣K"],
  options:[
-  {label:"A. 四张9、四张A 还可能"},
-  {label:"B. 四张K、四张Q 还可能"},
-  {label:"C. 四张2（红桃2来配）还可能"},
-  {label:"D. 王炸还可能"}],
- answer:1,
- why:"<b>结论：B。</b>数余量：9 只剩 1 张、A 只剩 2 张——都不够 4 张，四张9、四张A 已不可能；红桃2 出完了，拿什么配四张2；小王出完、大王只剩 1 张，王炸组不成。K 还剩 5 张、Q 还剩 6 张、J 还剩 7 张——真正的威胁是这些。这叫炸弹候选集合：不数出了几个，数还剩哪几种可能。",
- alt:"选A 是没数余量，9 和 A 都不够 4 张了；选C，红桃2 都没了拿什么配；选D，小王出完了王炸组不成。",
- flip:"这是中盘的结论——每出一圈都要更新余量表。余量是动态的，不是一成不变的。",
- conf:"最优（纯记牌推导）",
+  {label:"最该防四张9"},
+  {label:"最该防四张A"},
+  {label:"最该防四张K"},
+  {label:"最该防天王炸"}],
+ answer:2, recText:"四张K",
+ objective:"从候选集合里找出仍有组合空间的炸弹类型，而不是数已经出了几个炸。",
+ nextStep:"把K列为头号防范对象：你出大牌前先掂量，留一手能应付四K的后手。",
+ worstCase:"你以为炸出得差不多了、大胆冲大牌，结果撞上四K被反杀。",
+ reverseCondition:"每出一圈都要更新余量表；如果之后K出了4张，候选集合立刻重算。",
+ opponentView:"如果我是对手、手握四K，我最希望你觉得「炸出得差不多了」而放松警惕。",
+ explanationShort:"9剩1张、A剩2张、级牌剩3张——都不够4张；逢人配已出完、大王已出完，天王炸组不成。K一张没露过，8张全在：最值得防的恰恰是你没见过的。",
  tip:"数余量，不数个数"},
-{id:22, cat:"中盘", title:"顺子排除法：哪个更大顺子还活着？",
- bg:"中盘。你手里有顺子 45678，准备领出。顺子最怕被更大的顺子压——与其死记 5/10/K，不如把能压你的 6 个区间一个一个排除。",
- table:"轮到你领出。对手A剩8张。",
- hand:["♠4","♥5","♣6","♦7","♠8","♣9","♥Q","小王"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 8 · 敌A 8 · 其余未知",
- keys:"5:4/8 · 6:5/8 · 7:6/8 · 8:4/8 · 9:7/8 · 10:6/8 · J:5/8 · Q:2/8 · K:1/8 · A:3/8",
+{id:22, cat:"中盘", title:"区间排除：哪个更大顺子还活着？",
+ certainty:"preferred", difficulty:4, qtype:"读牌",
+ levelRank:"2",
+ seats:["you","enemyA","partner","enemyB"], leader:"you",
+ remaining:{you:9, partner:10, enemyA:8, enemyB:11},
+ bg:"你手里有顺子45678，准备领出。别死记5/10/K——把能压你的6个更大顺子区间，一个一个用记牌排除。",
+ table:"轮到你领出。",
+ tableText:"轮到你领出。",
+ keyCounts:{nineSeen:8, aceSeen:6, kingSeen:5, queenSeen:4, jackSeen:3, tenSeen:2},
+ intervals:[
+  {r:"56789", st:"excluded", note:"9已出完"},
+  {r:"6789T", st:"excluded", note:"9已出完"},
+  {r:"789TJ", st:"excluded", note:"9已出完"},
+  {r:"89TJQ", st:"excluded", note:"9已出完"},
+  {r:"9TJQK", st:"excluded", note:"9已出完"},
+  {r:"TJQKA", st:"reduced", note:"A剩2张，仍可能"}],
+ hand:["♠4","♥5","♣6","♦7","♠8","♣3","♥Q"],
  options:[
-  {label:"A. 56789 最危险"},
-  {label:"B. 789TJ 最危险"},
-  {label:"C. TJQKA 最危险"},
-  {label:"D. 都不用担心，直接出", play:["♠4","♥5","♣6","♦7","♠8"]}],
- answer:2,
- why:"<b>结论：C，TJQKA。</b>一个一个数：56789、6789T、789TJ、89TJQ、9TJQK 都要经过 9——9 已经出了 7 张只剩 1 张，这些区间全死了。唯一还活着的是 TJQKA（T剩2、J剩3、Q剩6、K剩7、A剩5，都有余量）。这叫区间排除：6 个更大顺子，能活几个一目了然。",
- alt:"选A/B 的都没数 9——9 见底了，所有经过 9 的顺子都组不起来。选D 则漏了 TJQKA，它完全可能，还大你一级。",
- flip:"如果 9 只出了 3 张，那 56789/6789T/789TJ 全都活着，你的 45678 就很危险——先出别的，别送。",
- conf:"最优（纯记牌推导）",
+  {label:"最该防 56789"},
+  {label:"最该防 89TJQ"},
+  {label:"最该防 9TJQK"},
+  {label:"最该防 TJQKA"}],
+ answer:3, recText:"TJQKA",
+ objective:"用区间排除法代替枢纽口诀：6个更大顺子区间逐个划掉。",
+ nextStep:"领出45678之前，先想好：如果被TJQKA压住，你的后手是什么。",
+ worstCase:"你领出45678，对手反手TJQKA压住，一波带走。",
+ reverseCondition:"记牌是动态的：如果之后A又出了2张，TJQKA也基本排除，你的顺子就安全了。",
+ opponentView:"如果我是对手、真有TJQKA，我最希望你觉得「9出完了就安全了」而大胆领出小顺。",
+ explanationShort:"9已出完，所有经过9的5个区间都不可能；只剩TJQKA还活着——A还剩2张，概率下降但仍可能。",
  tip:"区间排除，不记枢纽"},
-{id:23, cat:"中盘", title:"逼拆：三张打他的对子窝",
- bg:"中盘。对手A 连续出了 3 手对子（对33、对99、对KK），一直在用对子跑牌。你判断：他对子很多，三张很少。现在轮到你领出。",
- table:"对手A 连出 3 手对子。现在轮到你领出。",
- hand:["♠7","♥7","♦7","♣6","♥6","♣3","♦Q"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 7 · 敌A 12 · 队友 9 · 敌B 10",
- hist:"敌A 连出对33、对99、对KK；没出过三张",
+{id:23, cat:"中盘", title:"逼拆结构：三张打他的对子窝",
+ certainty:"preferred", difficulty:4, qtype:"读牌",
+ levelRank:"2",
+ seats:["you","enemyA","partner","enemyB"], leader:"you",
+ remaining:{you:8, partner:10, enemyA:12, enemyB:9},
+ bg:"对手A前面连续用66、99、JJ三手对子跑牌，明显对子结构顺。你领牌。",
+ table:"你领牌。",
+ tableText:"你领牌。",
+ history:["敌A连续出过66、99、JJ三手对子","敌A没出过三张"],
+ hand:["♠3","♥3","♦3","♠5","♥5","♣7","♦Q","♠K"],
  options:[
-  {label:"出对 66（跟他拼对子）", play:["♣6","♥6"]},
-  {label:"出单张 ♣3", play:["♣3"]},
-  {label:"出三张 777", play:["♠7","♥7","♦7"]}],
- answer:2,
- why:"<b>结论：出三张 777。</b>他对子正盛、三张是软肋——你领三张就是往软肋上打。他要抢这一圈，要么拆三带二、拆炸弹（心疼），要么交大三张（他不一定有），要么放你走。这才叫用牌型攻击对方结构：逼他拆牌，而不是跟他拼长处。",
- alt:"出对 66 是拿短处拼他的长处——他对子多，你的小对大概率被吃，还帮他顺牌。出单张 3 不痛不痒，他随便跟一张，毫无压力。",
- flip:"如果他之前出过三带二（说明他有三张），三张就不灵了——改出他缺的牌型。情报决定打法，不是牌型决定打法。",
- conf:"通常更优（取决于「他三张很少」的判断）",
- tip:"用牌型打他软肋"},
+  {label:"出333", play:["♠3","♥3","♦3"]},
+  {label:"出55", play:["♠5","♥5"]},
+  {label:"出单7", play:["♣7"]}],
+ answer:0, recText:"出333",
+ objective:"不跟着喂对子，切换到他没展示过的三张系，逼他拆结构或交炸。",
+ nextStep:"出333后看他反应：他若拆三张或交炸，他的对子结构就被破坏了，你再用55跟进。",
+ worstCase:"他手里真有三张系（比如777），你的333正好喂到他嘴里——「没出过三张」只是没展示过，不是没有。",
+ reverseCondition:"如果他之前出过三带二（三张系强），333就不灵了，改出他缺的牌型。",
+ opponentView:"如果我是敌A：你出55我最开心——66/77低成本继续顺牌；你出333，我的应手集合明显更窄，最难受。",
+ explanationShort:"你领三张就是往他软肋上打：他要抢这一圈，要么拆三带二、要么交炸弹、要么放你走。",
+ tip:"用牌型攻击对方结构"},
 {id:24, cat:"残局", title:"让头游：这炸弹为队友而炸",
  bg:"残局。队友报剩 2 张（你判断是一对），下轮很可能直接走完。对手A剩 5 张，刚出了三带二 777带55。你手里有四个6的炸弹，但还有 8 张牌，自己基本跑不了。",
  table:"对手A出 <b>三带二 777带55</b>，队友报剩2张（判断一对）。",
@@ -527,137 +616,154 @@ var SCENARIOS = [
  answer:0,
  why:"对手剩 4 张，大概率小炸弹蹲着等你。你直接炸：7777 要是比他的小，白给；比他大，赢了也是浪费——他还没被逼出来，下一圈照样能炸你。你出大顺子 10-A：他炸，你就用 7777 反杀，牌权回到你手里；他不炸，你 5 张顺子直接走掉，剩的牌也好走了。怎么算都是你赚。这叫逼炸：出他「不炸就亏、炸了更亏」的牌，逼他的炸弹现形。",
  tip:"大牌逼炸再反杀"},
-{id:33, cat:"进阶", title:"首攻对比·强牌：先控场，不急着清3",
- bg:"首攻，轮到你领出。你的牌很强：有大王、对A，牌很整，只有 3、7 两张散单。下家（敌A）前面几局爱顺 4、5、6 这样的小牌。",
- table:"首攻，桌面无牌。",
- hand:["♣3","♠7","♦Q","♥Q","♠A","♥A","大王","♣9","♥9","♠J","♥J"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 11 · 其余未知（首攻）",
- hist:"敌A 前面几局喜欢顺 4、5、6 这样的小牌",
+{id:33, cat:"进阶", title:"强牌为什么不急着清3？",
+ certainty:"preferred", difficulty:4, qtype:"牌权",
+ levelRank:"2",
+ seats:["you","enemyA","partner","enemyB"], leader:"you",
+ remaining:{you:16, partner:20, enemyA:22, enemyB:21},
+ bg:"你首攻。下家是对手敌A。敌A前两轮曾用4、6顺过小单，疑似还保留小单。你手里有A、大王和四炸9999，回手能力很强。",
+ table:"轮到你首攻。",
+ tableText:"你首攻。",
+ history:["敌A前两轮先后用4、6接过小单，疑似仍有小单","你手里仍有A和大王可作为单张回手"],
+ hand:["♠3","♦7","♣Q","♥A","大王","♠9","♥9","♦9","♣9","♠5","♥5","♣J","♦J","♠4","♥6","♣8"],
  options:[
-  {label:"出单张 ♣3（先清僵单）", play:["♣3"]},
-  {label:"出单张 ♠7（稍高的单，卡下家）", play:["♠7"]},
-  {label:"出对子 QQ", play:["♦Q","♥Q"]}],
- answer:1,
- why:"<b>结论：出 7。</b>你的大王+对A 是硬通货，随时能抢回牌权——3 留在手里不怕烂。现在首攻 7，正好卡住下家敌A 的 4、5、6：他顺不掉小牌，难受的是他。牌强时，优先控别人的牌，而不是急着清自己的。",
- alt:"出 3 等于帮敌A 顺走了 4、5、6——你本可以卡住他的，白送了人情。出对Q 太早暴露大牌型，情况不明时不如单张探路稳。",
- flip:"如果你无王无炸、以后很难再拿牌权，那就反过来：首攻 3 先清僵单（见本页第2题）。",
- conf:"通常更优（取决于对下家牌路的判断）",
- tip:"牌强先控场"},
-{id:34, cat:"进阶", title:"首攻对比·弱牌：先清3，别等",
- bg:"首攻，轮到你领出。你的牌很弱：无王无炸，散牌多，3 是唯一的孤张，其他牌勉强成套。你估计这局很难再拿到自由领出权。",
- table:"首攻，桌面无牌。",
- hand:["♣3","♠7","♦8","♣9","♥10","♠J","♦Q","♣K","♥A"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 9 · 其余未知（首攻）",
+  {label:"出3", play:["♠3"]},
+  {label:"出7", play:["♦7"]}],
+ answer:1, recText:"出7",
+ objective:"卡下家，不急着清最小僵单。",
+ opponentResponse:"如果你出3，对手最希望用4或5这种低成本牌顺掉垃圾并拿权。",
+ partnerImpact:"你首攻探路，队友主要看各家反应；你把3留着，残局多一张小单选择。",
+ nextStep:"如果先出7被对手用J/Q接上，你仍有A、大王回手拿回牌权。",
+ worstCase:"出7被敌A直接用A压住拿权——但你有大王和四炸，牌权丢了也能抢回来。",
+ reverseCondition:"如果你没有A/王/炸、牌又很散，答案会反转：优先清3（见下一题）。",
+ opponentView:"如果我是下家敌A，我最希望你出3——我用4或5顺掉小单，还能顺手拿权。",
+ explanationShort:"你以后很容易重新拿牌权，没必要现在就清3；出3反而给下家的小单一个舒服出口。",
+ tip:"强牌先卡下家"},
+{id:34, cat:"进阶", title:"牌弱时，为什么反而要先清3？",
+ certainty:"preferred", difficulty:4, qtype:"牌权",
+ levelRank:"2",
+ seats:["you","enemyA","partner","enemyB"], leader:"you",
+ remaining:{you:16, partner:20, enemyA:22, enemyB:21},
+ bg:"同一局面，但你的A、大王、四炸都没了，换成一手散单和低对：以后可能很久拿不到自由领牌权。",
+ table:"轮到你首攻。",
+ tableText:"你首攻。",
+ history:["敌A前两轮先后用4、6接过小单，疑似仍有小单","你已没有A/王/炸，回手能力弱"],
+ hand:["♠3","♦7","♣Q","♠5","♥8","♦9","♣10","♥J","♠4","♥4","♣6","♦6","♠8","♥8","♣K","♦K"],
  options:[
-  {label:"出单张 ♣3（先清僵单）", play:["♣3"]},
-  {label:"出单张 ♠7（卡下家）", play:["♠7"]},
-  {label:"出单张 ♥A（大单探路）", play:["♥A"]}],
- answer:0,
- why:"<b>结论：出 3。</b>你无王无炸，以后大概率拿不回自由领出权——现在不清 3，这张僵单很可能烂到最后。先清自己的，再管别人的。牌弱时，清僵单的价值远大于卡下家。",
- alt:"出 7 想卡下家，但你没大牌抢回牌权，卡住他也没用，反而 3 烂手里。出 A 探路更亏：A 是你唯一的硬牌，首攻就交了等于白送。",
- flip:"如果你有王有炸、能随时抢回牌权，那就反过来：留 3，先出 7 卡下家（见本页第1题）。",
- conf:"通常更优",
- tip:"牌弱先清僵单"},
-{id:35, cat:"进阶", title:"牌权让谁：KK 压还是不压？",
- bg:"中盘。队友剩 2 张，上一圈他主动领出对子（明显是要对子跑）。现在敌B 出对QQ，轮到你，你手里有对KK。队友就在你下手。",
- table:"敌B 出对QQ，轮到你。",
- hand:["♠K","♥K","♣3","♦5","♠7","♥9","♦J","♣Q","小王"],
- seats:"敌B → 你 → 队友 → 敌A",
- left:"你 9 · 队友 2 · 敌B 7 · 敌A 10",
- hist:"队友上一圈领出对子；敌B 对子中等",
+  {label:"出3", play:["♠3"]},
+  {label:"出7", play:["♦7"]}],
+ answer:0, recText:"出3",
+ objective:"趁还有首攻权，先清掉以后最难处理的僵单3。",
+ opponentResponse:"你出3，对手可能用4/5顺掉——但这正是你要付的代价：现在不清，以后更没机会。",
+ partnerImpact:"你首攻清僵单，队友看各家反应即可，负担不大。",
+ nextStep:"清掉3之后，用低对44/66之类继续探路，能走一手是一手。",
+ worstCase:"3被敌A用4顺走拿权，你之后长时间拿不到牌权——但这就是牌弱的现实，清3是止损。",
+ reverseCondition:"如果你有A/王/炸能稳定拿回牌权，答案反转：改出7卡下家（见上一题）。",
+ opponentView:"如果我是下家敌A，我当然希望你出7卡我；你出3，我顺个4/5也算小赚，但远不如卡住我舒服。",
+ explanationShort:"不是3突然变强，而是「当前首攻权」的时间价值变高——你以后可能很久拿不到自由领牌权。",
+ tip:"弱牌先清僵单"},
+{id:35, cat:"进阶", title:"能压，但为什么要过？",
+ certainty:"preferred", difficulty:4, qtype:"配合",
+ levelRank:"2",
+ seats:["enemyA","you","partner","enemyB"], leader:"enemyA",
+ remaining:{you:11, partner:2, enemyA:9, enemyB:13},
+ bg:"队友在你下手，只剩2张；他前两轮都主动接过对子，明显对子强。对手A现在出QQ，你手里有KK。",
+ table:"敌A出对QQ，轮到你。",
+ tableText:"敌A：QQ；轮到你。",
+ tablePlay:["♠Q","♥Q"],
+ history:["队友前两轮主动接过对子，对子结构明显强","队友剩2张"],
+ hand:["♠K","♥K","♠3","♥5","♦7","♣9","♠J","♦A","♣4","♥6","♦8"],
  options:[
-  {label:"对KK 压过去", play:["♠K","♥K"]},
-  {label:"过，让队友接"}],
- answer:1,
- why:"<b>结论：过。</b>队友剩 2 张且明示要对子——大概率就是一对。你 KK 压了，抢到的是一个你用不上的牌权（你剩 9 张跑不了），还断了队友的跑路。牌权不是谁抢到算谁的，是给最需要的人：让他接，他直接头游。",
- alt:"压 KK 看似主动，实则把队友的 2 张晾在那儿——他还得再等一圈，夜长梦多。能压不压，压的是大局。",
- flip:"如果队友剩 2 张但从没表达过要对子（牌路不明），或者你判断敌B 后面还有大对子等着，那就该压——先抢牌权再说。",
- conf:"通常更优（取决于对队友牌路的判断）",
- tip:"牌权给最需要的人"},
-{id:36, cat:"进阶", title:"炸弹后手：炸完你能干什么？",
- bg:"中盘。敌A 出顺子 7-J，队友不要，轮到你。你手里有四炸 4444。但你数了数：炸完之后你只剩 3 张臭单（3、6、Q），没有任何继续控场的能力。",
- table:"敌A 出顺子 7-J，队友过，轮到你。",
- hand:["♣4","♦4","♥4","♠4","♣3","♠6","♦Q"],
- seats:"敌A → 队友 → 你 → 敌B",
- left:"你 7（4444+3单） · 队友 10 · 敌A 8 · 敌B 9",
- keys:"已出炸弹 1 个（小）；王都还在",
- hist:"敌A 出过对子、三带二，牌型偏散，不像一波流",
+  {label:"KK压住", play:["♠K","♥K"]},
+  {label:"过"}],
+ answer:1, recText:"过",
+ objective:"把牌权留给更需要它的队友，而不是自己抢。",
+ opponentResponse:"对手A出QQ的最佳收益，就是逼出你方的大对子；如果你主动交KK，反而替他完成了交换。",
+ partnerImpact:"你过，队友有机会用AA/级牌对直接接走并可能一手跑完；你压，牌权转到你，队友的2张只能干等。",
+ nextStep:"过了之后看队友：他接走你就配合送；他也没接住，你再考虑用KK抢回。",
+ worstCase:"队友最后2张不是大对（比如一对小3），你的「过」等于白送对手一圈牌权。",
+ reverseCondition:"如果队友不是剩2张、而是剩8张且对子弱，KK压住可能更合理。",
+ opponentView:"如果我是敌A，我最希望你用KK压——逼出大对子、打断队友2张直走的节奏，一举两得。",
+ explanationShort:"团队里「谁拿牌权更值钱」比「我能不能压」更重要。",
+ tip:"能压不压，把权留给队友"},
+{id:36, cat:"进阶", title:"炸弹为什么不能只看这一手？",
+ certainty:"preferred", difficulty:4, qtype:"炸弹",
+ levelRank:"2",
+ seats:["enemyA","you","partner","enemyB"], leader:"enemyA",
+ remaining:{you:7, partner:9, enemyA:7, enemyB:12},
+ bg:"对手A剩7张，出顺子7-J。你有9999，炸完后只剩3、4、6三个臭单；队友剩9张。",
+ table:"敌A出顺子 7-J，轮到你。",
+ tableText:"敌A：顺子7-J；轮到你。",
+ tablePlay:["♠7","♥8","♣9","♦10","♠J"],
+ history:["敌A剩7张","队友剩9张，结构不明"],
+ hand:["♠9","♥9","♦9","♣9","♠3","♥4","♣6"],
  options:[
-  {label:"炸！抢牌权", play:["♣4","♦4","♥4","♠4"]},
-  {label:"不炸，放他走"}],
- answer:1,
- why:"<b>结论：不炸。</b>炸弹不是一手牌，是「牌权兑换券」——关键是你兑换到牌权之后能干什么。你炸完剩 3 个臭单，牌权在手里也走不掉，等于白白交掉唯一的硬控。敌A 牌型散（出过对子、三带二），这一手跑不远。留着 4444，等队友需要支援、或敌A 真要跑时再炸，一炸定音。",
- alt:"炸了抢个牌权看似主动，实则之后 3 个单张任人宰割——你把兑换券花在了一次毫无用处的领出上。",
- flip:"如果炸完之后你能连续出牌一波走完，或者敌A 这一手之后就要跑了，那就必须炸。炸不炸，看的是炸完之后。",
- conf:"通常更优（取决于对敌A 剩牌结构的判断）",
- tip:"炸弹是牌权兑换券"},
-{id:37, cat:"进阶", title:"座次反转：大王出不出？",
- bg:"残局。队友剩 1 张，敌A 也剩 1 张。敌B 出单张 3（最小的单），轮到你，你手里有大王。",
- table:"敌B 出单张 3，轮到你。",
- hand:["大王","♣5","♦9","♥K"],
- seats:"敌B → 你 → 队友 → 敌A",
- left:"你 4（含大王） · 队友 1 · 敌A 1 · 敌B 6",
+  {label:"四9炸", play:["♠9","♥9","♦9","♣9"]},
+  {label:"过"}],
+ answer:1, recText:"过",
+ objective:"炸弹的价值取决于炸完能否兑现牌权——先算炸完的手牌。",
+ opponentResponse:"对手最希望你用炸弹换掉他的顺子后剩一手散牌：你消耗了最强控制资源，却没形成连续出牌。",
+ partnerImpact:"你炸完剩三个臭单，队友剩9张也指望不上接应，等于单打独斗。",
+ nextStep:"过了之后，等一手能兑现的结构（比如队友接应、或自己拿到回手牌）再考虑交炸。",
+ worstCase:"顺子放过去，敌A剩2张直接威胁跑牌——这是「过」的真实代价，要掂量。",
+ reverseCondition:"如果你炸完后是QQ、KK、AA三组强对，答案立刻反转：炸！",
+ opponentView:"如果我是敌A，我最希望你炸——拿我的顺子换你的四炸，还附赠你三个臭单，怎么算我都不亏。",
+ explanationShort:"炸完只剩三个低单，很可能刚拿权就重新交出去，收益很低。",
+ tip:"先算炸完的手牌，再决定炸不炸"},
+{id:37, cat:"进阶", title:"敌人压了队友以后，你可以反炸",
+ certainty:"preferred", difficulty:4, qtype:"配合",
+ levelRank:"2",
+ seats:["partner","enemyA","you","enemyB"], leader:"partner",
+ remaining:{you:8, partner:6, enemyA:10, enemyB:11},
+ bg:"队友出三带二66644，敌人A用88855接。你有四个Q炸弹。",
+ table:"敌A出三带二 88855，轮到你。",
+ tableText:"敌A：88855；轮到你。",
+ tablePlay:["♠8","♥8","♦8","♠5","♥5"],
+ history:["队友刚出三带二66644，被敌A用88855压住"],
+ hand:["♠Q","♥Q","♦Q","♣Q","♠3","♥7","♦K","♣A"],
  options:[
-  {label:"出大王", play:["大王"]},
-  {label:"过，让队友走"}],
- answer:1,
- why:"<b>结论：过。</b>队友就在你下手，他剩 1 张——3 是最小的单，他随便出张牌就走了（头游），你的大王还省下来了。大王是全场最大的单张，留着后面定乾坤。这一题考的不是牌，是座次：谁在你后面，谁就先走。",
- alt:"出大王也能让队友走，但白白浪费全场最大的单张——杀鸡用牛刀，牛刀还钝了。",
- flip:"把座次换成「敌B → 你 → 敌A → 队友」，答案立刻反转：你过了就是敌A 直接跑，必须出大王拦住。同样的牌，换个座次，答案完全相反。",
- conf:"最优（座次决定一切）",
- tip:"看座次，不只看牌"},
-{id:38, cat:"进阶", title:"口诀边界：敌人压了队友，炸不炸？",
- bg:"中盘。队友出顺子 5-9，敌A 用顺子 6-10 接了过去（压了队友）。轮到你，你手里有四炸 7777。",
- table:"敌A 出顺子 6-10（接了队友的 5-9），轮到你。",
- hand:["♣7","♦7","♥7","♠7","♣3","♦8","♠J","♥Q"],
- seats:"队友 → 敌A → 你 → 敌B",
- left:"你 8（含7777） · 队友 6 · 敌A 9 · 敌B 11",
- hist:"队友一直在走顺子；敌A 刚用 6-10 接过去",
+  {label:"过，不压队友的牌"},
+  {label:"四Q炸", play:["♠Q","♥Q","♦Q","♣Q"]}],
+ answer:1, recText:"四Q炸",
+ objective:"夺回被敌人截走的牌权——你炸的是敌人的88855，不是队友的66644。",
+ opponentResponse:"敌人用88855的目的就是截断你队友的节奏；如果你死记「不压队友」而过，正中对手下怀。",
+ partnerImpact:"队友的三带二被压已经很伤；你反炸夺回牌权，下一手可以重新给队友送牌。",
+ nextStep:"炸完领出，优先给队友送他舒服的牌型（比如他之前出的三带二系）。",
+ worstCase:"敌B还有更大炸反杀回来——交炸前先看记牌：更大的炸还有没有组合空间。",
+ reverseCondition:"如果敌A只剩1张、且你炸完无法阻止另一敌人接风，需结合座次重新算。",
+ opponentView:"如果我是敌A，我最希望你因为「不压队友」而过——白嫖一手牌权，还打断了你们的节奏。",
+ explanationShort:"现在你不是在压队友：队友的控制权已经被敌人拿走。",
+ tip:"炸的是敌人的牌，不是队友的"},
+{id:38, cat:"进阶", title:"读Pass：他连续两次没接对子",
+ certainty:"preferred", difficulty:5, qtype:"读牌",
+ levelRank:"2",
+ seats:["enemyA","you","partner","enemyB"], leader:"you",
+ remaining:{you:5, partner:9, enemyA:11, enemyB:8},
+ bg:"敌人A先面对对10选择过，随后面对对Q又过。现在你重新领牌，手里有对9、对K、单A。",
+ table:"你重新领牌。",
+ tableText:"你领牌。",
+ history:["敌A面对对10选择过","敌A随后面对对Q又过"],
+ hand:["♠9","♥9","♠K","♥K","♦A"],
  options:[
-  {label:"炸！从敌A 手里抢回控制", play:["♣7","♦7","♥7","♠7"]},
-  {label:"不炸，「不压队友的牌」"}],
- answer:0,
- why:"<b>结论：炸。</b>「不压队友」这条口诀的边界是：队友还控制着牌权时。现在牌权已经在敌A 手里了——你炸的不是队友，是从敌人手里抢回控制权。炸完你领出，继续配合队友走顺子。记住：口诀都有边界，越界的是情况，不是你。",
- alt:"不炸的话，敌A 拿着牌权继续出，队友的节奏断了，你的炸弹也错过了最佳时机。教条地「不压队友」，反而坑了队友。",
- flip:"如果队友的 5-9 没人要（他还控制着牌权），你当然不能炸——那才是真的压队友。炸之前先看：牌权在谁手里？",
- conf:"通常更优",
- tip:"口诀有边界"},
-{id:39, cat:"进阶", title:"资产重组：KKKK 拆还是不拆？",
- bg:"残局。敌A 剩 6 张，之前连走过两手对子（对子多）。敌A 刚出对1010，队友过，轮到你。你手里有 KKKK：留着当炸弹，还是拆成两对 KK？",
- table:"敌A 出对1010，队友过，轮到你。",
- hand:["♠K","♥K","♦K","♣K","♣3","♦8","♠Q"],
- seats:"敌A → 队友 → 你 → 敌B",
- left:"你 7（KKKK+3张） · 敌A 6 · 队友 8 · 敌B 9",
- keys:"大王2/2出完 · 小王2/2出完 · A:7/8 · 2(级):6/8 · 已出炸弹 2 个",
- hist:"敌A 连走两手对子；没人再可能有王炸",
- options:[
-  {label:"不拆，留着当四炸（这手过）"},
-  {label:"拆！用一对KK 压过去", play:["♠K","♥K"]}],
- answer:1,
- why:"<b>结论：拆。</b>数余量：王出完了，A 只剩 1 张（对A 已不可能），2 只剩 2 张（对2 已不可能）——对KK 是全场最大的对子，除了炸弹没人动得了。敌A 对子多、剩 6 张，拆成两对 KK 你能连压他两次；而留着当四炸，只能用一次，还未必有机会用。同样的四张牌，两种形态，价值完全不同——这叫资产重组。",
- alt:"留着当炸弹看似保险，实则这局大概率用不上：王都没了，没人能逼你交炸；你真正缺的是「能压对子的硬牌」，两对 KK 正好给两次。",
- flip:"如果王还没出、或 A/2 剩很多（对KK 会被对A/对2 压），那就别拆——老老实实留着当炸弹。拆不拆，看的是余量表。",
- conf:"通常更优（取决于记牌是否准确）",
- tip:"同牌多种形态"},
-{id:40, cat:"进阶", title:"5张≠炸：看牌路，不套口诀",
- bg:"残局。敌A 剩 5 张。口诀说「剩 5 张考虑炸」，但你看了看他的牌路：他出过顺子 3-7、出过三带二、还走过两手对子——牌型很散，不像藏着同花顺或五炸。你手里有四炸 8888，轮到你领出。",
- table:"轮到你领出。敌A 剩 5 张。",
- hand:["♣8","♦8","♥8","♠8","♣6","♥6","♠3","♦Q","♥K","小王"],
- seats:"你 → 敌A → 队友 → 敌B",
- left:"你 10（含8888） · 敌A 5 · 队友 7 · 敌B 8",
- keys:"已出炸弹 1 个；9:5/8 · 10:4/8",
- hist:"敌A 出过顺子3-7、三带二、两手对子——三种牌型都走过",
- options:[
-  {label:"先炸！（5 张很可能是炸）", play:["♣8","♦8","♥8","♠8"]},
-  {label:"不炸，出对 66 探他", play:["♣6","♥6"]}],
- answer:1,
- why:"<b>结论：不炸。</b>5 张只是数量，不是结构。他出过顺子、三带二、对子——三种牌型都走过，说明他的牌是散的，最后 5 张更可能是「两对+一单」这种散结构，而不是同花顺/五炸一波流。口诀是没信息时的默认动作；有牌路信息时，牌路优先。",
- alt:"无脑炸，万一他真是两对+一单，你的炸弹就白交了——炸完你还得面对他的对子，更难受。炸弹要炸在刀刃上，不是炸在口诀上。",
- flip:"如果他之前一直在藏牌、没出过什么牌型（信息少），或记牌显示某点数高度可疑，那还是炸——信息不足时，口诀是保底策略。",
- conf:"取决于记牌",
- tip:"5张是数量不是结构"}
+  {label:"出对9", play:["♠9","♥9"]},
+  {label:"出对K", play:["♠K","♥K"]},
+  {label:"出单A", play:["♦A"]}],
+ answer:0, recText:"出对9",
+ objective:"用对9做测试：他连续Pass中高对子，对9更可能安全，还能继续收集信息。",
+ opponentResponse:"他也可能故意保护AA/级牌对——所以这里只能说概率变化，不能断言他没有大对。",
+ partnerImpact:"你领出测试，队友看结果即可，负担不大。",
+ nextStep:"对9如果没人接，说明他的对子确实弱，下一手可以继续用对K施压；如果被接，重新评估。",
+ worstCase:"他手里正好是对A/级牌对钓鱼，你的对9测试等于白送一手信息加牌权。",
+ reverseCondition:"如果敌A只剩4张、可能正好保留两对，这个推断要大幅降权。",
+ opponentView:"如果我是敌A、真在钓鱼，我最希望你拿对9来试——白送信息；如果我真没对子，我最怕你继续出对子压我。",
+ explanationShort:"连续两次对对子Pass，「他有很多中高对子」的概率下降——但只是概率变化，不是定论。",
+ followUps:[
+  {reveal:"敌A现在剩4张。",
+   question:"还坚持用对9测试吗？",
+   options:["坚持出对9","改出对K","改出单A"],
+   answer:2,
+   why:"剩4张很可能正好是两对，之前的Pass推断大幅降权——此时单A试探更稳。"}],
+ tip:"读Pass是概率变化，不是定论"},
 ];;
 </script>
 <script>
@@ -757,6 +863,121 @@ function optHTML(o, i){
   return '<button class="opt" data-i="'+i+'"><span class="tag">'+o.label+'</span>'+mini+'</button>';
 }
 function findScn(id){ for(var i=0;i<SCENARIOS.length;i++) if(SCENARIOS[i].id===id) return SCENARIOS[i]; return null; }
+
+function seatName(id){ return {you:"你",partner:"队友",enemyA:"敌A",enemyB:"敌B"}[id]||id; }
+var KC_LABEL = {bigJokerSeen:["大王",2],smallJokerSeen:["小王",2],aceSeen:["A",8],kingSeen:["K",8],queenSeen:["Q",8],jackSeen:["J",8],tenSeen:["10",8],nineSeen:["9",8],levelSeen:["级牌",8],wildSeen:["逢人配",2]};
+function keyCountsText(kc){
+  return Object.keys(kc).map(function(k){
+    var L = KC_LABEL[k]||[k,"?"];
+    return L[0]+"已出"+kc[k]+"/"+L[1];
+  }).join(" · ");
+}
+function certLabel(c){ return {rule:"规则确定",preferred:"当前更优",risky:"高风险",insufficient:"信息不足"}[c]||"当前更优"; }
+function statusBarHTML(s){
+  var h = "";
+  var d = s.difficulty||3;
+  var stars = "★★★★★".slice(0,d)+"☆☆☆☆☆".slice(0,5-d);
+  h += '<div class="srow srow1"><span class="stars">'+stars+'</span>'
+    + (s.qtype?'<span class="qtag">'+s.qtype+'</span>':"")
+    + '<span class="ctag '+(s.certainty||"preferred")+'">'+certLabel(s.certainty)+'</span></div>';
+  if(s.seats && s.seats.length && typeof s.seats[0]==="string" && isNaN(+s.seats[0].charAt(0))){
+    var seq = s.seats.map(function(id){ return '<span class="seat'+(id==="you"?" me":"")+'">'+seatName(id)+'</span>'; }).join('<span class="sarr">→</span>');
+    h += '<div class="srow"><span class="slabel">座次</span>'+seq+'</div>';
+  }
+  if(s.remaining){
+    var r = s.remaining;
+    h += '<div class="srow"><span class="slabel">剩牌</span><span>你'+r.you+'｜队友'+r.partner+'｜敌A'+r.enemyA+'｜敌B'+r.enemyB+'</span></div>';
+  }
+  if(s.tableText) h += '<div class="srow"><span class="slabel">桌面</span><span>'+s.tableText+'</span></div>';
+  if(s.keyCounts) h += '<div class="srow"><span class="slabel">记牌</span><span>'+keyCountsText(s.keyCounts)+'</span></div>';
+  if(s.history && s.history.length){
+    var first2 = s.history.slice(0,2).join("；");
+    var rest = s.history.slice(2);
+    h += '<div class="srow"><span class="slabel">牌路</span><span>'+first2
+      + (rest.length? ' <details class="histmore"><summary>展开全部'+s.history.length+'条</summary><div>'+rest.join("；")+'</div></details>' : '')
+      + '</span></div>';
+  }
+  if(s.intervals){
+    h += '<div class="intervals">'+s.intervals.map(function(iv){
+      var cls = {possible:"iv-ok",reduced:"iv-warn",excluded:"iv-out"}[iv.st];
+      var txt = {possible:"仍可能",reduced:"概率下降",excluded:"基本排除"}[iv.st];
+      return '<div class="iv '+cls+'"><b>'+iv.r+'</b><span>'+txt+'</span><i>'+iv.note+'</i></div>';
+    }).join("")+'</div>';
+  }
+  return '<div class="statusbar">'+h+'</div>';
+}
+function verdictHTML(s, good){
+  var cert = s.certainty||"preferred";
+  if(good){
+    if(cert==="rule") return '<div class="verdict good">✓ 答对了</div>';
+    var label = {preferred:"当前更优",risky:"高风险",insufficient:"信息不足，暂选"}[cert];
+    var cls = (cert==="preferred")?"good":"warn";
+    return '<div class="verdict '+cls+'">'+label+'：'+(s.recText||"")+'</div>';
+  }
+  if(cert==="rule") return '<div class="verdict bad">✗ 答错了</div>';
+  return '<div class="verdict bad">这个选择不太好，再看看解析</div>';
+}
+function advExplainHTML(s){
+  var cert = s.certainty||"preferred";
+  var h = '<div class="concl '+cert+'"><b>'+certLabel(cert)+'：'+(s.recText||"")+'</b>'
+    + (s.explanationShort?'<div class="concl-sub">'+s.explanationShort+'</div>':"")+'</div>';
+  function block(title, body, cls){
+    if(!body) return "";
+    return '<div class="ablock '+(cls||"")+'"><b>'+title+'</b><div>'+body+'</div></div>';
+  }
+  h += block("你的目标", s.objective);
+  h += block("对手最优回应", s.opponentResponse);
+  h += block("队友影响", s.partnerImpact);
+  h += block("你的下一手", s.nextStep);
+  h += block("最坏情况", s.worstCase, "worst");
+  h += block("答案反转条件", s.reverseCondition, "rev");
+  if(s.opponentView) h += '<div class="oppview"><b>如果我是对手，我最希望你出什么？</b><div>'+s.opponentView+'</div></div>';
+  if(s.explanationDeep) h += '<details class="deep"><summary>再深一层</summary><div>'+s.explanationDeep+'</div></details>';
+  if(s.tip) h += '<div><span class="tip">要点：'+s.tip+'</span></div>';
+  return h;
+}
+function followUpHTML(s){
+  if(!s.followUps || !s.followUps.length) return "";
+  return '<div class="fuwrap"><button class="fubtn">再给我一条信息</button><div class="fubody" style="display:none"></div></div>';
+}
+function bindFollowUp(box, s){
+  var wrap = box.querySelector(".fuwrap");
+  if(!wrap || !s.followUps) return;
+  var idx = 0;
+  function showNext(btn){
+    if(idx >= s.followUps.length){ btn.style.display="none"; return; }
+    var fu = s.followUps[idx];
+    var body = wrap.querySelector(".fubody");
+    body.innerHTML = '<div class="fureveal">再给你一条信息：'+fu.reveal+'</div>'
+      + '<div class="fuq">'+fu.question+'</div>'
+      + '<div class="opts">'+fu.options.map(function(o,i){ return '<button class="opt fuopt" data-i="'+i+'"><span class="tag">'+o+'</span></button>'; }).join("")+'</div>'
+      + '<div class="fuwhy"></div>';
+    body.style.display = "block";
+    btn.style.display = "none";
+    var opts = body.querySelectorAll(".fuopt");
+    for(var k=0;k<opts.length;k++){
+      opts[k].onclick = function(){
+        var pick = +this.getAttribute("data-i");
+        for(var j=0;j<opts.length;j++){
+          opts[j].disabled = true;
+          if(j===fu.answer) opts[j].classList.add("picked-correct");
+          else if(j===pick) opts[j].classList.add("picked-wrong");
+        }
+        var ok = (pick===fu.answer);
+        body.querySelector(".fuwhy").innerHTML = '<div class="verdict '+(ok?"good":"bad")+'">'+(ok?"✓ 判断正确":"再想想")+'</div><div>'+fu.why+'</div>';
+        idx++;
+        if(idx < s.followUps.length){
+          var nb = document.createElement("button");
+          nb.className = "fubtn"; nb.textContent = "再给我一条信息";
+          nb.onclick = function(){ showNext(nb); };
+          body.appendChild(nb);
+        }
+      };
+    }
+  }
+  wrap.querySelector(".fubtn").onclick = function(){ showNext(this); };
+}
+
 function revealScn(box, s, pick, silent){
   var btns = box.querySelectorAll(".opt");
   for(var i=0;i<btns.length;i++){
@@ -766,13 +987,18 @@ function revealScn(box, s, pick, silent){
   }
   var ex = box.querySelector(".explain");
   var good = (pick===s.answer);
-  ex.innerHTML = '<div class="verdict '+(good?"good":"bad")+'">'+(good?"✓ 答对了":"✗ 答错了")+'</div>'
-    +"<div>"+s.why+"</div>"
-    +(s.alt?'<div class="layer"><b>为什么其他选项不优：</b>'+s.alt+"</div>":"")
-    +(s.flip?'<div class="layer"><b>什么时候答案会反转：</b>'+s.flip+"</div>":"")
-    +(s.conf?'<div class="confl">判断可信度：<b>'+s.conf+"</b></div>":"")
-    +'<div><span class="tip">要点：'+s.tip+"</span></div>";
+  if(s.objective){
+    ex.innerHTML = verdictHTML(s, good) + advExplainHTML(s) + followUpHTML(s);
+  } else {
+    ex.innerHTML = '<div class="verdict '+(good?"good":"bad")+'">'+(good?"✓ 答对了":"✗ 答错了")+'</div>'
+      +"<div>"+s.why+"</div>"
+      +(s.alt?'<div class="layer"><b>为什么其他选项不优：</b>'+s.alt+"</div>":"")
+      +(s.flip?'<div class="layer"><b>什么时候答案会反转：</b>'+s.flip+"</div>":"")
+      +(s.conf?'<div class="confl">判断可信度：<b>'+s.conf+"</b></div>":"")
+      +'<div><span class="tip">要点：'+s.tip+"</span></div>";
+  }
   ex.classList.add("show");
+  bindFollowUp(box, s);
 }
 function metaHTML(s){
   var h = "";
@@ -793,7 +1019,7 @@ function scnCard(s, label){
     +'<h3><span class="cat">'+s.cat+"</span>"+label+" · "+s.title+"</h3>"
     +'<div class="bg">'+s.bg+"</div>"
     +'<div class="table-line">桌面：'+s.table+tablePlay+"</div>"
-    +metaHTML(s)
+    +(s.difficulty?statusBarHTML(s):metaHTML(s))
     +handBlock
     +'<div class="opts">'+s.options.map(optHTML).join("")+"</div>"
     +'<div class="explain"></div>'
