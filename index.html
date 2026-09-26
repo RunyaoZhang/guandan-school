@@ -91,6 +91,11 @@ nav.tabs button.on{color:var(--red); border-bottom-color:var(--red); font-weight
 .koujue ol{margin:0; padding-left:22px; font-size:14.5px;}
 .koujue li{margin-bottom:5px;}
 .koujue li b{color:var(--red);}
+.cathead{display:flex; align-items:baseline; gap:8px; margin:20px 0 10px; padding:9px 14px;
+ background:var(--green); color:#f7f3e8; border-radius:8px;}
+.cathead b{font-size:16px; letter-spacing:2px;}
+.cathead span{font-size:12.5px; opacity:.85; flex:1;}
+.cathead i{font-style:normal; font-size:12.5px; opacity:.85;}
 .foot-note{font-size:13px; color:var(--ink-soft); text-align:center; margin-top:24px;}
 .quiz-q{font-size:16px; font-weight:700; margin:10px 0 4px;}
 </style>
@@ -103,8 +108,6 @@ nav.tabs button.on{color:var(--red); border-bottom-color:var(--red); font-weight
 </header>
 <nav class="tabs">
   <button data-p="scn" class="on">情景实战</button>
-  <button data-p="quiz">牌型速测</button>
-  <button data-p="rules">规则速览</button>
   <button data-p="koujue">实战口诀</button>
 </nav>
 <section class="panel on" id="p-scn">
@@ -117,15 +120,6 @@ nav.tabs button.on{color:var(--red); border-bottom-color:var(--red); font-weight
   </div>
   <div id="scnList"></div>
 </section>
-<section class="panel" id="p-quiz">
-  <div class="progress">
-    <span id="qProgText">已答 0/8</span>
-    <div class="bar"><i id="qProgBar"></i></div>
-    <button id="qResetBtn">重置</button>
-  </div>
-  <div id="quizList"></div>
-</section>
-<section class="panel" id="p-rules"></section>
 <section class="panel" id="p-koujue"></section>
 <div class="foot-note">题目按官方比赛规则与常见实战打法编写，级牌统一按「打2」举例。<br>规则会因地方玩法略有差异，记住大逻辑最重要。</div>
 </div>
@@ -510,125 +504,74 @@ var SCENARIOS = [
 </script>
 <script>
 "use strict";
-var QUIZ = [
-{q:"<span class='quiz-q'>3-4-5-6-7-8</span>（六张连起来的单牌），能出吗？", cards:["♠3","♥4","♣5","♦6","♠7","♥8"],
- options:["能出，是顺子","不能出"], answer:1,
- why:"顺子必须是恰好五张——不可多、不可少。六张连单不能出，得拆成「五张顺子加一张单」两手打。"},
-{q:"<span class='quiz-q'>3-3-4-4-5-5</span> 是什么？", cards:["♠3","♥3","♠4","♥4","♠5","♥5"],
- options:["三连对，可以出","不能出"], answer:0,
- why:"这是「连对」（三连对），掼蛋允许最多三对连对，是合法牌型。注意：两连对不可出。"},
-{q:"<span class='quiz-q'>3-3-4-4-5-5-6-6</span>（四连对），能出吗？", cards:["♠3","♥3","♠4","♥4","♠5","♥5","♠6","♥6"],
- options:["能出","不能出"], answer:1,
- why:"连对不可超过三对，四连对不能出。得拆成「三连对加一对」两手打。"},
-{q:"<span class='quiz-q'>♥5-♥6-♥7-♥8-♥9</span>（红桃同花连牌），算什么？", cards:["♥5","♥6","♥7","♥8","♥9"],
- options:["同花顺，算炸弹级","只是普通顺子"], answer:0,
- why:"同花色的五张连牌叫「同花顺」，按炸弹算！大小排在六张炸弹之下、五张炸弹之上——能压任何四张炸弹。"},
-{q:"<span class='quiz-q'>3-3-3-4-4-4</span> 是什么？", cards:["♠3","♥3","♣3","♠4","♥4","♣4"],
- options:["钢板（三顺），可以出","不能出"], answer:0,
- why:"两组连续的三张叫「钢板」（三顺），是合法牌型。注意不可超过两组。"},
-{q:"<span class='quiz-q'>大王-大王-小王-小王</span>，这是什么？", cards:["大王","大王","小王","小王"],
- options:["天王炸，全场最大","不能这么出"], answer:0,
- why:"四张王在一起就是「天王炸」，是全场最大的牌，见谁灭谁。轻易别拆。"},
-{q:"<span class='quiz-q'>10-J-Q-K-A</span>（花色不一），算什么？", cards:["♠10","♥J","♣Q","♦K","♠A"],
- options:["普通顺子","同花顺"], answer:0,
- why:"花色不全一样，就只是普通顺子，不是炸弹。想当炸弹用，五张必须同花。"},
-{q:"级牌是2，<span class='quiz-q'>♥2 配上 7-7-7</span>，组成了什么？", cards:["♥2※","♠7","♥7","♣7"],
- options:["四张7的炸弹","什么都组不成"], answer:0,
- why:"红桃2是逢人配（万能牌），这里它<b>代作第 4 张 7</b>，和三张 7 组成「四张7的炸弹」。数清楚：一张配牌加三张 7 是四张，不是五张。配成炸弹通常比拆散用更划算。"}
-];
-var RULES_HTML = ""
-+"<div class='rule-sec'><h3>基本规则</h3><ul>"
-+"<li>两副牌共108张，4个人玩，每人27张；对家（坐对面的人）是你的队友。</li>"
-+"<li>级牌从 <b>2</b> 开始打：2→3→4→…→K→A，打过A则一局结束。<b>头游所在的一方升级</b>（升几级看对手名次，见下）。</li>"
-+"<li>牌的大小（以打2为例）：<b>大王 &gt; 小王 &gt; 2(级牌) &gt; A &gt; K &gt; Q &gt; J &gt; 10 &gt; 9 &gt; 8 &gt; 7 &gt; 6 &gt; 5 &gt; 4 &gt; 3</b>。</li>"
-+"</ul></div>"
-+"<div class='rule-sec'><h3>牌型一览</h3>"
-+"<table><tr><th>牌型</th><th>说明</th></tr>"
-+"<tr><td>单张 / 对子 / 三张</td><td>字面意思。</td></tr>"
-+"<tr><td>三带二</td><td>三张带一对，如 333+22；比三张部分的大小。</td></tr>"
-+"<tr><td>顺子</td><td><b>恰好五张</b>连续单牌，不分花色，不含王。</td></tr>"
-+"<tr><td>连对</td><td>三对连续对牌（如334455）；<b>两连对不可出，不可超过三对</b>。</td></tr>"
-+"<tr><td>钢板（三顺）</td><td>两组连续的三张（如333444）；<b>不可超过两组</b>。</td></tr>"
-+"<tr><td>同花顺</td><td>同花色五张连牌，<b>按炸弹算</b>。</td></tr>"
-+"<tr><td>炸弹</td><td>四张及以上同点数（4～8张）。</td></tr>"
-+"<tr><td>天王炸</td><td>大王×2 + 小王×2，全场最大。</td></tr>"
-+"</table></div>"
-+"<div class='rule-sec'><h3>炸弹谁大？</h3>"
-+"<p style='font-size:15px;'><b>天王炸 &gt; 八张 &gt; 七张 &gt; 六张 &gt; 同花顺 &gt; 五张 &gt; 四张</b></p>"
-+"<ul><li>普通牌型之间：只有牌型相同、张数相同才能比大小。</li><li>炸弹可以压任何非炸弹牌型。</li></ul></div>"
-+"<div class='rule-sec'><h3>逢人配（万能牌）</h3><ul>"
-+"<li>两张<b>红桃级牌</b>是「逢人配」，除了王之外可以配成任意牌型。</li>"
-+"<li>可以和八张炸弹一起组成<b>十张炸弹</b>。</li>"
-+"<li>配牌<b>取大优先</b>：能配大不配小（如 ♥2 配 77+88 时算 888）；实在没牌可配时，按级牌本身用。</li>"
-+"<li>进贡时不用交出逢人配。</li>"
-+"</ul></div>"
-+"<div class='rule-sec'><h3>升级 / 进贡 / 接风 / 报牌</h3><ul>"
-+"<li><b>升级</b>（看对手名次）：对手双下（包揽最后两名）→升3级；对手有一人末游→升2级；只有自己对家末游（头游+末游）→升1级。</li>"
-+"<li><b>进贡</b>：双下后，两个输家各向赢家进贡一张「除红桃级牌外」最大的牌；赢家各还一张不超过10的牌。单下时末游向头游进贡一张。</li>"
-+"<li><b>抗贡</b>：手握两张大王（或双方各一张大王）可抗贡，不用进贡。</li>"
-+"<li><b>接风</b>：某人出完最后一手牌且无人要，下一轮出牌权归他的对家。</li>"
-+"<li><b>报牌</b>：剩6张主动报牌；剩10张有问必报。</li>"
-+"<li><b>首攻</b>：一般由进贡过的下游先出；抗贡则上游先出；双下时进贡牌大的一家先出。</li>"
-+"</ul></div>";
 var KOUJUE_HTML = ""
 +"<div class='koujue'><h4>组牌篇</h4><ol>"
 +"<li>组牌第一目标：<b>手数尽量少</b>，单牌越少越好。</li>"
-+"<li>红桃配（逢人配）优先级：<b>按炸弹大小配</b>（同花顺 &gt; 五张炸 &gt; 四张炸，能配大的别配小的）→ 再补顺子/三带二缺口；<b>别单出</b>（单出只当级牌用，血亏）。</li>"
++"<li>红桃配优先级：<b>按炸弹大小配</b>（同花顺 &gt; 五张炸 &gt; 四张炸，能配大的别配小的）→ 再补顺子/三带二缺口；<b>别单出、别叠炸</b>（已有四炸就别再组第二个）。</li>"
 +"<li><b>三不拆</b>：王炸、大顺子、强对子，拆了多半后悔。</li>"
-+"<li><b>有打有收</b>：打出去的牌型，手里要有更大的能收回来。</li>"
-+"<li>组顺子时优先<b>去掉小单张</b>，牌型更紧凑。</li>"
++"<li><b>有打有收</b>：打出去的牌型，手里要有更大的能收回来；收不回来就先留着。</li>"
++"<li>组顺子优先<b>去掉小单张</b>；<b>钢板留大不留小</b>。</li>"
++"<li>牌型要灵活，<b>善于变牌型</b>：别因为牌整齐就舍不得变。</li>"
 +"</ol></div>"
 +"<div class='koujue'><h4>出牌篇</h4><ol>"
 +"<li>首攻<b>小单张探路</b>（倒数第二小的单更佳）；情况不明<b>对子先行</b>。</li>"
-+"<li><b>小顺先出、大顺留后</b>，等对手的小顺子「自投罗网」。</li>"
++"<li><b>两个小单张，不打不健康</b>：别留两个小单在手里，尽早处理。</li>"
++"<li><b>小顺先出、大顺留后</b>，等对手的小顺子「自投罗网」；出完顺子<b>留对子防一手</b>。</li>"
 +"<li>封对手的顺子要<b>封到头</b>，别给他留念想。</li>"
-+"<li>「三不带」可以<b>搞破坏</b>，打乱对手牌型、消耗他的对子。</li>"
-+"<li>对手连续用同一牌型跑牌、己方都要不起 → <b>尽早炸</b>。</li>"
++"<li>「三不带」可以<b>搞破坏</b>；对手连续出对子，<b>三带二压他</b>最难受。</li>"
 +"<li><b>拆对手牌型</b>也是防守：他出过 7-10 的顺子，你出单张 8，他以后想组顺子就得拆别的牌来补。</li>"
++"<li>牌差就<b>搅局</b>：小单逼他交 A/2，小对逼他拆大对；<b>不抢出牌权</b>，大牌留着帮队友挡。</li>"
 +"</ol></div>"
 +"<div class='koujue'><h4>炸弹篇</h4><ol>"
 +"<li><b>时机比大小重要</b>：四头炸用对时机能赢八头炸。</li>"
-+"<li>头火（较早的炸弹）<b>炸上不炸下</b>。</li>"
-+"<li>残局对手剩4张<b>慎炸</b>（防四张炸，「枪要慎打四」）。</li>"
++"<li>头火（较早的炸弹）<b>炸上不炸下</b>；主攻炸下家、助攻炸上家。</li>"
++"<li>对手连续用同一牌型跑牌、己方都要不起 → <b>趁早炸</b>，拉回自己的节奏。</li>"
++"<li>残局对手剩4张<b>慎炸</b>（防四张炸）；7张可炸、8张慎炸，但<b>该炸还要炸</b>。</li>"
 +"<li>小炸诱敌、大炸开道；<b>骑马火压火</b>（用刚好大一点的炸压）。</li>"
-+"<li>该拆就拆：小牌卡手时，<b>拆小炸解套</b>比供着强。</li>"
++"<li>该拆就拆：小牌卡手时，<b>拆小炸解套</b>比供着强；但对手连续出小牌「示弱」时，警惕<b>炸弹陷阱</b>，先别交炸。</li>"
++"<li>炸完要<b>控牌型</b>，别送对手顺手的牌。</li>"
 +"</ol></div>"
 +"<div class='koujue'><h4>残局篇（对手剩N张，你出牌）</h4><ol>"
 +"<li><b>4张→打单</b>（防炸弹、不喂对子）；<b>5张→考虑炸+出对</b>；<b>6张→打三张</b>。</li>"
 +"<li><b>7/8张→打顺</b>；<b>9张→打单</b>；<b>10张→打对</b>。</li>"
 +"<li>自己剩3张：<b>出两张、留一张</b>（先出对子，留单张等队友送）。</li>"
++"<li>自己剩 2 张（一大一小）：<b>先出小的诱敌</b>，藏大牌收尾。</li>"
 +"<li>对手剩1张：用<b>最大单张顶死</b>，绝不能放。</li>"
 +"<li>残局先拿小牌<b>逼一逼</b>，逼对手提前交炸弹。</li>"
-+"<li>自己剩 2 张（一大一小）：<b>先出小的诱敌</b>，藏大牌收尾——对手以为你剩小牌交大牌来管，正中下怀。</li>"
 +"</ol></div>"
 +"<div class='koujue'><h4>配合篇</h4><ol>"
-+"<li><b>一主一跟从</b>：开局先定位，弱牌就当辅助保对家。</li>"
++"<li><b>一主一跟从</b>：开局先定位，弱牌就当辅助保对家；<b>两人都不冲，上游要落空</b>——定了主攻就别摇摆。</li>"
 +"<li><b>不压队友的牌</b>；自己管不上就让给对家。</li>"
-+"<li>队友剩少张 → <b>送他缺的同类型牌</b>（渴了送水）。</li>"
++"<li>队友剩少张 → <b>送他缺的同类型牌</b>（渴了送水）；对家炸完，赶紧<b>送最小的对子</b>帮他脱手。</li>"
++"<li>队友在拼命，你要<b>留后劲</b>；队友能跑就<b>让他游</b>，别抢。</li>"
 +"<li>牌再差，目标也是<b>不被双下</b>，少让对手升级。</li>"
++"<li>记住：<b>配合比个人牌技重要</b>，对家赢了才算赢。</li>"
 +"</ol></div>"
 +"<div class='koujue'><h4>记牌篇</h4><ol>"
-+"<li><b>必记</b>：王、级牌、红桃配（万能牌）；<b>重点记</b>：K、A。</li>"
++"<li><b>必记</b>：王、级牌、红桃配；<b>重点记</b>：K、A。</li>"
 +"<li>心里估算<b>炸弹数量</b>：出了几个、还剩几个。</li>"
 +"<li>注意<b>断张</b>：某张牌自己一张没有，对手很可能有炸弹。</li>"
-+"<li><b>5/10/K 是顺子的枢纽</b>：牌面见多张 5、10、K，对手很难再有长顺，可大胆出小牌。</li>"
-+"<li><b>炸弹数学</b>：一局一般 3～4 个炸；已经见过三个炸，后面基本没炸了，大胆冲。</li>"
++"<li><b>5/10/K 是顺子的枢纽</b>：牌面见多张 5、10、K，对手很难再有长顺。</li>"
++"<li>留意<b>对家缺门</b>：他缺什么牌型，送牌时心里有数。</li>"
++"<li><b>炸弹数学</b>：一局一般 3～4 个炸；见过三个炸，后面基本没炸，大胆冲。</li>"
 +"<li>红桃配迟迟不出要警惕：很可能已经配成了<b>炸弹或同花顺</b>。</li>"
-+"<li>观察队友出的牌型，那是他在告诉你<b>他缺什么</b>。</li>"
 +"</ol></div>";
 /* ---------- 渲染与交互 ---------- */
 var store = {
   get:function(){ try{ return JSON.parse(localStorage.getItem("gdschool-v1")||"{}"); }catch(e){ return {}; } },
   set:function(d){ localStorage.setItem("gdschool-v1", JSON.stringify(d)); }
 };
-var state = {scn:{}, quiz:{}};
-(function(){ var s = store.get(); if(s.scn) state.scn=s.scn; if(s.quiz) state.quiz=s.quiz; })();
+var state = {scn:{}};
+(function(){ var s = store.get(); if(s.scn) state.scn=s.scn; })();
 var curCat = "全部";
 var CATS = ["全部","开局","中盘","残局","特殊"];
+var CAT_DESC = {"开局":"首攻出什么、开局怎么定位","中盘":"记牌判断、拆牌博弈、炸弹时机","残局":"剩几张怎么打、配合收尾","特殊":"逢人配、进贡、升级等规则应用"};
+function catCount(c){ return SCENARIOS.filter(function(s){ return s.cat===c; }).length; }
 function $(id){ return document.getElementById(id); }
 function renderChips(){
   $("catChips").innerHTML = CATS.map(function(c){
-    return '<button data-c="'+c+'" class="'+(c===curCat?"on":"")+'">'+c+'</button>';
+    var label = (c==="全部" ? "全部 "+SCENARIOS.length : c+" "+catCount(c));
+    return '<button data-c="'+c+'" class="'+(c===curCat?"on":"")+'">'+label+'</button>';
   }).join("");
   var btns = document.querySelectorAll("#catChips button");
   for(var i=0;i<btns.length;i++){
@@ -640,10 +583,6 @@ function updateProg(){
   var correct = ids.filter(function(id){ return state.scn[id]===1; }).length;
   $("progText").textContent = "已答 "+ids.length+"/"+total+" · 答对 "+correct;
   $("progBar").style.width = (ids.length/total*100)+"%";
-  var qids = Object.keys(state.quiz);
-  var qok = qids.filter(function(id){ return state.quiz[id]===1; }).length;
-  $("qProgText").textContent = "已答 "+qids.length+"/"+QUIZ.length+" · 答对 "+qok;
-  $("qProgBar").style.width = (qids.length/QUIZ.length*100)+"%";
 }
 function optHTML(o, i){
   var mini = "";
@@ -667,25 +606,32 @@ function revealScn(box, s, pick, silent){
     +'<div><span class="tip">要点：'+s.tip+"</span></div>";
   ex.classList.add("show");
 }
+function scnCard(s){
+  var n = SCENARIOS.indexOf(s)+1;
+  var tablePlay = "";
+  if(s.tablePlay){
+    tablePlay = '<div style="margin-top:6px"><div class="hand">'
+      + s.tablePlay.map(function(x){ return cardHTML(parseCard(x)); }).join("")+"</div></div>";
+  }
+  var handBlock = s.hand.length ? '<div class="hand-label">你的手牌</div>'+handHTML(s.hand) : "";
+  return '<div class="scn" data-id="'+s.id+'">'
+    +'<h3><span class="cat">'+s.cat+"</span>第"+n+"题 · "+s.title+"</h3>"
+    +'<div class="bg">'+s.bg+"</div>"
+    +'<div class="table-line">桌面：'+s.table+tablePlay+"</div>"
+    +handBlock
+    +'<div class="opts">'+s.options.map(optHTML).join("")+"</div>"
+    +'<div class="explain"></div>'
+    +"</div>";
+}
 function renderScn(){
-  var items = SCENARIOS.filter(function(s){ return curCat==="全部"||s.cat===curCat; });
-  var html = items.map(function(s){
-    var n = SCENARIOS.indexOf(s)+1;
-    var tablePlay = "";
-    if(s.tablePlay){
-      tablePlay = '<div style="margin-top:6px"><div class="hand">'
-        + s.tablePlay.map(function(x){ return cardHTML(parseCard(x)); }).join("") + "</div></div>";
-    }
-    var handBlock = s.hand.length ? '<div class="hand-label">你的手牌</div>'+handHTML(s.hand) : "";
-    return '<div class="scn" data-id="'+s.id+'">'
-      +'<h3><span class="cat">'+s.cat+"</span>第"+n+"题 · "+s.title+"</h3>"
-      +'<div class="bg">'+s.bg+"</div>"
-      +'<div class="table-line">桌面：'+s.table+tablePlay+"</div>"
-      +handBlock
-      +'<div class="opts">'+s.options.map(optHTML).join("")+"</div>"
-      +'<div class="explain"></div>'
-      +"</div>";
-  }).join("");
+  var cats = (curCat==="全部") ? ["开局","中盘","残局","特殊"] : [curCat];
+  var html = "";
+  for(var ci=0; ci<cats.length; ci++){
+    var c = cats[ci];
+    var items = SCENARIOS.filter(function(s){ return s.cat===c; });
+    html += '<div class="cathead"><b>'+c+'</b><span>'+CAT_DESC[c]+'</span><i>'+items.length+'题</i></div>';
+    html += items.map(scnCard).join("");
+  }
   $("scnList").innerHTML = html;
   var boxes = document.querySelectorAll("#scnList .scn");
   for(var k=0;k<boxes.length;k++){
@@ -709,49 +655,6 @@ function renderScn(){
     })(boxes[k]);
   }
 }
-function renderQuiz(){
-  var html = QUIZ.map(function(q, qi){
-    return '<div class="scn" data-qi="'+qi+'">'
-      +'<h3><span class="cat">速测</span>第'+(qi+1)+"题</h3>"
-      +'<div class="bg">'+q.q+"</div>"
-      +'<div class="hand">'+q.cards.map(function(x){ return cardHTML(parseCard(x)); }).join("")+"</div>"
-      +'<div class="opts">'+q.options.map(function(t,i){
-          return '<button class="opt" data-i="'+i+'"><span class="tag">'+t+"</span></button>";
-        }).join("")+"</div>"
-      +'<div class="explain"></div></div>';
-  }).join("");
-  $("quizList").innerHTML = html;
-  var boxes = document.querySelectorAll("#quizList .scn");
-  for(var k=0;k<boxes.length;k++){
-    (function(box){
-      var qi = +box.getAttribute("data-qi");
-      var q = QUIZ[qi];
-      var btns = box.querySelectorAll(".opt");
-      function show(pick){
-        for(var i=0;i<btns.length;i++){
-          btns[i].disabled = true;
-          if(i===q.answer) btns[i].classList.add("picked-correct");
-          else if(i===pick) btns[i].classList.add("picked-wrong");
-        }
-        var ex = box.querySelector(".explain");
-        var good = (pick===q.answer);
-        ex.innerHTML = '<div class="verdict '+(good?"good":"bad")+'">'+(good?"✓ 答对了":"✗ 答错了")+"</div><div>"+q.why+"</div>";
-        ex.classList.add("show");
-      }
-      if(state.quiz[qi]!==undefined) show(state.quiz[qi]===1 ? q.answer : -1);
-      for(var i=0;i<btns.length;i++){
-        btns[i].onclick = function(){
-          if(state.quiz[qi]!==undefined) return;
-          var pick = +this.getAttribute("data-i");
-          state.quiz[qi] = (pick===q.answer)?1:0;
-          store.set(state);
-          show(pick);
-          updateProg();
-        };
-      }
-    })(boxes[k]);
-  }
-}
 var tabBtns = document.querySelectorAll("nav.tabs button");
 for(var ti=0; ti<tabBtns.length; ti++){
   tabBtns[ti].onclick = function(){
@@ -764,10 +667,8 @@ for(var ti=0; ti<tabBtns.length; ti++){
   };
 }
 $("resetBtn").onclick = function(){ state.scn={}; store.set(state); renderScn(); updateProg(); };
-$("qResetBtn").onclick = function(){ state.quiz={}; store.set(state); renderQuiz(); updateProg(); };
-$("p-rules").innerHTML = RULES_HTML;
 $("p-koujue").innerHTML = KOUJUE_HTML;
-renderChips(); renderScn(); renderQuiz(); updateProg();
+renderChips(); renderScn(); updateProg();
 </script>
 </body>
 </html>
